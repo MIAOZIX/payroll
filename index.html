@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="payroll.css">
+    <link rel="stylesheet" href="https://www.jq22.com/jquery/font-awesome.5.81.all.css">
+    <script src="https://www.jq22.com/jquery/jquery-3.3.1.js"></script>
+    <title>算工资</title>
+</head>
+<body>
+    <div class="view" id="view">
+        <div class="list">
+            <div class="priceList">
+                <div class="title"><i class="fa fa-bars" aria-hidden="true">产品单价表</i></div>
+                <div class="priceform">
+                    <table border="1" v-for='(items,key) in priceList' :key='key' @dblclick="editprice(key)">
+                        <caption>{{items.productname}}</caption>
+                        <tr>
+                            <th>工序</th> 			
+                            <th>数量</th>
+                            <th>单价</th>
+                        </tr>
+                        <tr v-for='item in items.process'>
+                            <td>{{item.name}}</td>
+                            <td>{{item.num}}</td>
+                            <td>{{item.price}}</td>
+                        </tr> 
+                    </table>
+                </div>
+            </div>
+            <div class="addprice">
+                <button class="btn1" @click='addPrice()'>添加单价</button>
+            </div>
+            
+        </div>
+    
+        <div class="content">
+            <div class="operate">
+                <div class="doPay">
+                    <div class="title"><i class="fa fa-cog" aria-hidden="true">操作区</i></div>
+                    <div class="docontent">
+                        <div class="form">
+                            <div class="staffName">员工姓名：
+                                <input type="text" ref="input1" v-model='staffName' @keyup.enter='nextFocus(1)'>
+                            </div>
+                            <div class="staffName">员工岗位：
+                                <input type="text" ref="input2" v-model='staffJob' @keyup.enter='nextFocus(2)'>
+                            </div>
+                            <div class="staffName">产品名称：
+                                <input type="text" ref="input3" v-model='productName' @keyup.enter='nextFocus(3)'>
+                            </div>
+                            <div class="staffName">产品工序：
+                                <input type="text" ref="input4" v-model='processName' @input="changeInput()" @keyup.enter='nextFocus(4)'>
+                            </div>
+                            <div class="staffName">工序单价：
+                                <input type="text" ref="input5" v-model='processPrice' @keyup.enter='nextFocus(5)'>
+                            </div>
+                            <div class="staffName">计件数量：
+                                <textarea type="text" ref="input6" v-model='allNum' @keyup.enter="saveNow()"></textarea>
+                            </div>
+                            <div class="dsave">
+                                <button class="btn1 rbor" @click='clearStaff()'>取消</button>
+                                <button class="btn1 gbor" @click='saveNow()'>暂存</button>
+                            </div>
+                        </div>
+                        <div class="addcard form">
+                            <div class="staffName">产品名称：
+                                <input type="text" v-model='newProduct'>
+                            </div>
+                            <div class="staffName">产品数量：
+                                <input type="text" v-model='newCount'>
+                            </div>
+                            <div class="staffName">工序名称：
+                                <input type="text" v-model='newProcess'>
+                            </div>
+                            <div class="staffName">工序单价：
+                                <input type="text" v-model='newPrice'>
+                            </div>
+                            <div class="dsave">
+                                <button class="btn1 rbor" @click='toBack()'>取消</button>
+                                <button class="btn1 gbor" @click='savePrice()'>保存</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="doshow" v-if="payroll[0]">
+                    <div class="title"><i class="fa fa-table" aria-hidden="true">展示区</i></div>
+                    <div class="show1" id="show1">
+                        <table>
+                            <tr>
+                                <th>姓名</th>
+                                <th>岗位</th> 			
+                                <th>产品</th>
+                                <th>工序</th> 			
+                                <th>数量</th>
+                                <th>工资</th>
+                            </tr>
+                            <tr v-for="(item,key) in payroll" :key='key' @dblclick="editform(key)">
+                                <td>{{item.staffname}}</td>
+                                <td>{{item.staffjob}}</td>
+                                <td>{{item.productname}}</td>
+                                <td>{{item.process.name}}</td>
+                                <td>{{item.process.num}}</td>
+                                <td>{{item.process.wage}}</td>
+                            </tr>
+                            <tr>
+                                <th>{{payroll[0].staffname}}汇总</th>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <th class="money"><span>￥</span>{{wageAll}}</th>
+                            </tr>
+                        </table>
+                        <div class="save">
+                            <button class="btn1" @click='saveCard()'>保存</button>
+                        </div>
+                    </div>
+                </div>
+            </div> 
+            <div class="showList">
+                <div class="title"><i class="fa fa-list-alt" aria-hidden="true">已完成列表</i>
+                    <i class="fa fa-print" aria-hidden="true" @click='outCSV()'></i> 
+                </div>
+                <div class="show">
+                    <hr v-for='itme in saveCardList'>
+                    <div class="card" v-for='(items,key) in saveCardList' :key='key' @dblclick="editcard(key)">
+                        <table>
+                            <tr>
+                                <th>姓名</th>
+                                <th>岗位</th> 			
+                                <th>产品</th>
+                                <th>工序</th> 
+                                <th>单价</th>			
+                                <th>数量</th>
+                                <th>工资</th>
+                            </tr>
+                            <tr v-for='item in items.process'>
+                                <td>{{items.staff.name}}</td>
+                                <td>{{item.job}}</td>
+                                <td>{{item.productname}}</td>
+                                <td>{{item.name}}</td>
+                                <td>{{item.price}}</td>
+                                <td>{{item.num}}</td>
+                                <td>{{item.wage}}</td>
+                            </tr>
+                            <tr>
+                                <th>{{items.staff.name}}汇总</th>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <th class="money"><span>￥</span>{{items.wage}}</th>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+     
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+var view = new Vue({
+  el: '#view',
+  data: {
+    //   输入单价数据
+    newProduct:'',
+    newProcess:'',
+    newCount:'',
+    newPrice:'',
+    // 单价储存数据
+    priceList:[
+        {
+            productname:'产品名称',
+                process:[
+                    {
+                        name:'产品工序',
+                        num:0,
+                        price:0.0,
+                    },
+                ]
+        }
+    ],
+    //   输入计件数据
+    staffName:'',
+    staffJob:'',
+    productName:'',
+    processName:'',
+    processPrice:'',
+    allNum:'',
+    //   暂存数据
+    wageAll:0.00,
+    wageall:null,
+    payroll: [],
+    // 已数据数据卡
+    saveCardList:[],
+},
+created() {
+    //获取localStorage的数据
+    var r = confirm("是否保留上次工资卡数据");
+    if (r == true) {
+        this.saveCardList=JSON.parse(window.localStorage.getItem('saveCardList'))
+    } else {
+        window.localStorage.removeItem('saveCardList')
+    }
+    var t = confirm("是否保留上次产品单价数据");
+    if (t == true) {
+        this.priceList=JSON.parse(window.localStorage.getItem('priceList'))
+    } else {
+        window.localStorage.removeItem('priceList')
+    }
+},
+methods: {
+    // 添加单价函数
+    addPrice(){
+        $('.addcard').slideDown();
+        $('.addcard').css({display:'flex'})
+    },
+    // 清除函数
+    toBack(){
+        $('.addcard').slideUp()
+    },
+    // 输入监听函数
+    changeInput(){
+        this.processPrice=0.0
+        var productname=this.productName
+        var processname=this.processName
+
+        var inProduct = this.priceList.find(function (obj) { if (obj.productname== productname) { return obj; } });
+        var inProcess = inProduct.process.find(function (obj) { if (obj.name== processname) { return obj; } });
+        var price=inProcess.price
+        this.processPrice=price
+    },
+    // 暂存函数
+    savePrice(){
+        let self = this
+        var newPro=[]
+        var inList = false
+
+        var productname=this.newProduct
+        var productnum=this.newCount
+        var processname=this.newProcess
+        var processprice=this.newPrice
+        var PList=this.priceList
+
+        if(productname===''||productnum===''||processname===''||processprice===''){
+            alert('请填写完整信息')
+        }else{
+            frist:
+            for(var i=0,l=PList.length;i<l;i++){
+            if (PList[i].productname === productname) {  
+                inList= true
+                // console.log('产品已存在')
+                for(var key=0,le=PList[i].process.length;key<le;key++){
+                    if (PList[i].process[key].name === processname) {
+                        alert('此产品工序已存在')
+                        this.newProcess=''
+                        this.newPrice=''
+                        break
+                    }else{
+                        // console.log('新工序')
+                        var saveNewProcess = {
+                            name:processname,
+                            num:productnum,
+                            price:processprice,
+                        }
+                        PList[i].process.push(saveNewProcess)
+                        this.newProcess=''
+                        this.newPrice=''
+                        break
+                    }
+                }
+                  
+            }
+            }
+            if(inList === false){
+                // console.log('新产品')
+                var saveNewProduct={
+                    productname:productname,
+                    process:[
+                        {
+                            name:processname,
+                            num:productnum,
+                            price:processprice,
+                        },
+                    ]
+                }
+                PList.push(saveNewProduct)
+                this.newProcess=''
+                this.newPrice=''
+            }
+
+        }
+
+        
+    },
+    // 清除函数
+    clearStaff(){
+        this.staffName=''
+        this.staffJob=''
+        this.productName=''
+        this.processName=''
+        this.allNum=''
+    },
+    // 暂存函数
+    saveNow(){
+        let self = this
+        var inList= false
+        var inProcess= false
+        var staffname=this.staffName
+        var staffjob=this.staffJob
+        var productname=this.productName
+        var productnum=50000
+        var processname=this.processName
+        var processnum=eval(this.allNum);
+        var PList=this.priceList
+
+        // 计数每一项工序工资
+        var price=this.processPrice
+        var processwage=processnum*price
+        this.wageall +=processwage
+        // 计算总工资
+        this.wageAll =this.wageall.toFixed(2)
+        // 储存新的单价
+        for(var i=0,l=PList.length;i<l;i++){
+            if (PList[i].productname === productname) {  
+                inList= true
+                // console.log('产品已存在')
+                for(var key=0,le=PList[i].process.length;key<le;key++){
+                    if (PList[i].process[key].name === processname) {
+                        inProcess= true
+                        PList[i].process[key].price = price
+                        break
+                    }
+                }
+                if(inProcess === false){
+                        console.log('新工序')
+                        var saveNewProcess = {
+                            name:processname,
+                            num:productnum,
+                            price:price,
+                        }
+                        PList[i].process.push(saveNewProcess)
+                        break
+                } 
+                  
+            }
+        }
+            if(inList === false){
+                // console.log('新产品')
+                var saveNewProduct={
+                    productname:productname,
+                    process:[
+                        {
+                            name:processname,
+                            num:productnum,
+                            price:price,
+                        },
+                    ]
+                }
+                PList.push(saveNewProduct)
+            }
+
+        // 储存新的计算表
+        var savebefore = {
+        staffname:staffname,
+        staffjob:staffjob,
+        productname:productname,
+        process:{
+            name:processname,
+            num:processnum,
+            wage:processwage.toFixed(2),
+        },
+        }
+
+        this.payroll.push(savebefore)
+        this.processName=''
+        this.allNum=''
+        this.processPrice=''
+        this.$refs[`input${3}`].focus()
+    },
+    // 储存已完成函数
+    saveCard(){
+        let self = this
+        var saveProcessCard = []
+        
+    //  储存单个卡里的工序列表
+        for(var i=0,l=this.payroll.length;i<l;i++){
+            let productname = self.payroll[i].productname
+            let processname = self.payroll[i].process.name
+            let processnum = self.payroll[i].process.num
+            let processwage = self.payroll[i].process.wage
+            var staffjob = self.payroll[i].staffjob
+
+            var inProduct = this.priceList.find(function (obj) { if (obj.productname== productname) { return obj; } });
+            var inProcess = inProduct.process.find(function (obj) { if (obj.name== processname) { return obj; } });
+            var price=inProcess.price
+
+            var saveProcess = {
+                job:staffjob,
+                productname:productname,
+                name:processname,
+                price:price,
+                num:processnum,
+                wage:processwage
+            }
+
+            saveProcessCard.push(saveProcess)
+        }
+    //   储存卡到卡列表
+        var staffname=this.payroll[0].staffname
+
+        var saveInCard = {
+            staff:{
+            name:staffname,
+            },
+            process:saveProcessCard,
+            wage:self.wageAll,
+        }
+    
+        this.saveCardList.push(saveInCard)
+        //保存至浏览器localStorage
+        window.localStorage.setItem('saveCardList',JSON.stringify(this.saveCardList))
+        window.localStorage.setItem('priceList',JSON.stringify(this.priceList))
+        alert('保存成功')
+        // 清空初始化
+        this.payroll=[]
+        this.staffName=''
+        this.staffJob=''
+        this.productName=''
+        this.processName=''
+        this.allNum=''
+        this.wageAll=0.00
+        this.wageall=null
+    },
+ 
+    //导出csv文件函数 
+    outCSV(){
+        let self = this
+        // 列标题，逗号隔开，每一个逗号就是隔开一个单元格
+        let str = `姓名,岗位,产品,工序,单价,数量,工资\n`;
+        // 增加\t为了不让表格显示科学计数法或者其他格式
+        for(let i = 0 ; i < this.saveCardList.length ; i++ ){
+            
+            for(const key in this.saveCardList[i].process){
+                for(const key in this.saveCardList[i].staff){
+                    str+=`${this.saveCardList[i].staff[key] + '\t'},`;
+                }
+                for(const j in this.saveCardList[i].process[key]){
+                    console.log(this.saveCardList[i].process[key][j])
+                    str+=`${this.saveCardList[i].process[key][j] + '\t'},`;
+                }
+                str+='\n';     
+            }
+            str+=this.saveCardList[i].staff.name+'汇总'+',,,,,,'+this.saveCardList[i].wage+ '\n';
+        }
+        console.log(str)
+        // encodeURIComponent解决中文乱码
+        const uri = 'data:text/csv;charset=utf-8,\ufeff' + encodeURIComponent(str);
+        // 通过创建a标签实现
+        const link = document.createElement("a");
+        link.href = uri;
+        // 对下载的文件命名
+        link.download =  "工资数据表.csv";
+        link.click();
+
+    },
+    // 暂存表编辑函数
+    // 暂存表删除函数 
+    editform(e){
+				let self = this
+				var ewage = this.payroll[e].process.wage
+				// console.log(e)
+                // console.log(ewage)
+                // console.log(this.wageAll)
+				this.payroll.splice(e,1)
+				this.payroll=this.payroll
+                this.wageAll=this.wageAll-ewage
+                // console.log(this.wageAll)
+                // console.log(this.payroll)
+				alert('已删除该条工资数据')
+            },
+    // 储存卡删除函数 
+    editcard(e){
+				let self = this
+				this.saveCardList.splice(e,1)
+				this.saveCardList=this.saveCardList
+                window.localStorage.setItem('saveCardList',JSON.stringify(this.saveCardList))
+				alert('已删除该员工工资单')
+            },
+    // 产品单价删除函数 
+    editprice(e){
+				let self = this
+				this.priceList.splice(e,1)
+				this.priceList=this.priceList
+                window.localStorage.setItem('priceList',JSON.stringify(this.priceList))
+				alert('已删除该产品')
+            },
+    
+    // 回车跳到下一输入框
+    nextFocus(index) {
+        const curInput = this.$refs[`input${index}`];
+        const nextInput = this.$refs[`input${index + 1}`];
+        nextInput.focus();
+    }     
+        
+}
+
+ 
+})
+</script>
+</body>
+</html>

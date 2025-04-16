@@ -1,0 +1,179 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+
+.view{
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    background-color: #fefefe;
+}
+.list{
+    flex: 2;
+    height: 100vh;
+    border-right: 1px solid;
+    position: relative;
+}
+.priceform{
+    width: 100%;
+    height: 86vh;
+    overflow-y: auto;
+}
+.content{
+    flex: 7;
+    height: 100vh;
+
+}
+.operate{
+    width: 100%;
+    min-height: 60vh;
+    border-bottom: 1px solid;
+    display: flex;
+
+}
+.doPay{
+    flex: 1;
+    border-right: 1px solid;
+    position: relative;
+    overflow: auto;
+}
+.doshow{
+    flex: 1;
+    position: relative;
+}
+.showList{
+    width: 100%;
+    height: 40vh;
+    position: relative;
+}
+.title{
+    width: 100%;
+    height: 2rem;
+    background-color: #0a043c;
+    color: #ffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.title>i{
+    margin: 0 10px;
+}
+.docontent{
+    width: 100%;
+    height: 90%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.form{
+    width: 80%;
+    height: 80%;
+    padding: 1rem;
+    border-radius: 8px;
+    color: #14274e;
+    font-size: 20px;
+    border: 3px solid #14274e;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow:auto;
+}
+.addcard{
+    display: none;
+    position: absolute;
+    background-color: #fefefe;
+}
+table{
+    width: 100%;
+}
+caption{
+    font-size: 25px;
+    background-color: #706897;
+
+}
+th{
+    font-size: 20px;
+}
+td{
+    font-size: 20px;
+    text-align: center;
+}
+.money{
+    color: #af2d2d;
+    font-size: 25px;
+}
+.money>span{
+    font-size: 30px;
+}
+.btn1{
+    width: 90%;
+    height: 2rem;
+    margin: 10px;
+    background-color: #ffffff;
+    border:2px solid #14274e;
+    border-radius: 6px;
+    color: #14274e;
+}
+
+.dsave{
+    width: 100%;
+    padding-top: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+.save{
+    float: right;
+    width: 30%;
+    height: 20%;
+    padding: 10px;
+}
+.show{
+    width: 100%;
+    height: 35vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto;
+    position: relative;
+}
+.show1{
+    width: 100%;
+    height: 55vh;
+    overflow-y: auto;
+}
+
+.card{
+    margin-top: 0.5rem;
+    width: 89%;
+    border: 3px solid #14274e;
+    border-radius: 8px;
+}
+textarea{
+    width: 247px;
+}
+.rbor{
+    border-color: #af2d2d;
+    color: #af2d2d;
+}
+.gbor{
+    border-color: #678a74;
+    color: #678a74;
+}
+input{
+    font-size: 20px;
+}
+
+
+@media only screen and (max-width: 400px) {
+    .list{
+        display: none;
+    }
+    .operate{
+        flex-direction: column;
+    }
+
+}
