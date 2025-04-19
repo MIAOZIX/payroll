@@ -230,10 +230,28 @@ methods: {
         var productname=this.productName
         var processname=this.processName
 
-        var inProduct = this.priceList.find(function (obj) { if (obj.productname== productname) { return obj; } });
-        var inProcess = inProduct.process.find(function (obj) { if (obj.name== processname) { return obj; } });
-        var price=inProcess.price
-        this.processPrice=price
+        // Fix: Check if priceList exists before trying to find a product
+        if (!this.priceList) {
+            console.error('Price list is null or undefined');
+            return;
+        }
+
+        // Check if product exists before trying to find it
+        var inProduct = this.priceList.find(function (obj) { 
+            return obj && obj.productname === productname; 
+        });
+        
+        // Only proceed if product was found
+        if (inProduct && inProduct.process) {
+            var inProcess = inProduct.process.find(function (obj) { 
+                return obj && obj.name === processname; 
+            });
+            // Only set price if process was found
+            if (inProcess) {
+                var price=inProcess.price
+                this.processPrice=price
+            }
+        }
     },
     // 暂存函数
     savePrice(){
@@ -316,28 +334,64 @@ methods: {
         var productname=this.productName
         var productnum=50000
         var processname=this.processName
-        var processnum=eval(this.allNum);
+        
+        // Validate required fields
+        if (!staffname || !staffjob || !productname || !processname) {
+            alert('请填写必要的信息');
+            return;
+        }
+        
+        // Fix: Check if allNum is empty or invalid before evaluating
+        var processnum = 0;
+        if (this.allNum && this.allNum.trim() !== '') {
+            try {
+                processnum = eval(this.allNum);
+            } catch (e) {
+                alert('请输入有效的数量');
+                return;
+            }
+        } else {
+            alert('请输入数量');
+            return;
+        }
+        
+        // Fix: Check if priceList exists
+        if (!this.priceList) {
+            this.priceList = [];
+        }
         var PList=this.priceList
 
+        // Initialize wageall if it's null
+        if (this.wageall === null) {
+            this.wageall = 0;
+        }
+
         // 计数每一项工序工资
-        var price=this.processPrice
+        var price=this.processPrice || 0
         var processwage=processnum*price
         this.wageall +=processwage
         // 计算总工资
         this.wageAll =this.wageall.toFixed(2)
+        
         // 储存新的单价
-        for(var i=0,l=PList.length;i<l;i++){
-            if (PList[i].productname === productname) {  
-                inList= true
-                // console.log('产品已存在')
-                for(var key=0,le=PList[i].process.length;key<le;key++){
-                    if (PList[i].process[key].name === processname) {
-                        inProcess= true
-                        PList[i].process[key].price = price
-                        break
+        if (PList && PList.length > 0) {
+            for(var i=0,l=PList.length;i<l;i++){
+                if (PList[i] && PList[i].productname === productname) {  
+                    inList= true
+                    // console.log('产品已存在')
+                    if (PList[i].process && PList[i].process.length > 0) {
+                        for(var key=0,le=PList[i].process.length;key<le;key++){
+                            if (PList[i].process[key] && PList[i].process[key].name === processname) {
+                                inProcess= true
+                                PList[i].process[key].price = price
+                                break
+                            }
+                        }
+                    } else {
+                        PList[i].process = [];
                     }
-                }
-                if(inProcess === false){
+                    
+                    if(inProcess === false){
                         console.log('新工序')
                         var saveNewProcess = {
                             name:processname,
@@ -346,24 +400,25 @@ methods: {
                         }
                         PList[i].process.push(saveNewProcess)
                         break
-                } 
-                  
+                    } 
+                }
             }
         }
-            if(inList === false){
-                // console.log('新产品')
-                var saveNewProduct={
-                    productname:productname,
-                    process:[
-                        {
-                            name:processname,
-                            num:productnum,
-                            price:price,
-                        },
-                    ]
-                }
-                PList.push(saveNewProduct)
+        
+        if(inList === false){
+            // console.log('新产品')
+            var saveNewProduct={
+                productname:productname,
+                process:[
+                    {
+                        name:processname,
+                        num:productnum,
+                        price:price,
+                    },
+                ]
             }
+            PList.push(saveNewProduct)
+        }
 
         // 储存新的计算表
         var savebefore = {
@@ -377,6 +432,11 @@ methods: {
         },
         }
 
+        // Initialize payroll if it's null
+        if (!this.payroll) {
+            this.payroll = [];
+        }
+
         this.payroll.push(savebefore)
         this.processName=''
         this.allNum=''
@@ -388,7 +448,13 @@ methods: {
         let self = this
         var saveProcessCard = []
         
-    //  储存单个卡里的工序列表
+        // Fix: Check if payroll exists and has items before processing
+        if (!this.payroll || this.payroll.length === 0) {
+            alert('没有可保存的数据');
+            return;
+        }
+        
+        //  储存单个卡里的工序列表
         for(var i=0,l=this.payroll.length;i<l;i++){
             let productname = self.payroll[i].productname
             let processname = self.payroll[i].process.name
@@ -396,9 +462,26 @@ methods: {
             let processwage = self.payroll[i].process.wage
             var staffjob = self.payroll[i].staffjob
 
-            var inProduct = this.priceList.find(function (obj) { if (obj.productname== productname) { return obj; } });
-            var inProcess = inProduct.process.find(function (obj) { if (obj.name== processname) { return obj; } });
-            var price=inProcess.price
+            // Fix: Add null checks before accessing properties
+            var inProduct = this.priceList.find(function (obj) { 
+                return obj && obj.productname === productname; 
+            });
+            
+            if (!inProduct || !inProduct.process) {
+                console.error('Product or process not found:', productname);
+                continue; // Skip this iteration if product not found
+            }
+            
+            var inProcess = inProduct.process.find(function (obj) { 
+                return obj && obj.name === processname; 
+            });
+            
+            if (!inProcess) {
+                console.error('Process not found:', processname);
+                continue; // Skip this iteration if process not found
+            }
+            
+            var price = inProcess.price;
 
             var saveProcess = {
                 job:staffjob,
@@ -411,7 +494,14 @@ methods: {
 
             saveProcessCard.push(saveProcess)
         }
-    //   储存卡到卡列表
+        
+        // Only proceed if we have processes to save
+        if (saveProcessCard.length === 0) {
+            alert('没有有效的工序数据可保存');
+            return;
+        }
+        
+        //   储存卡到卡列表
         var staffname=this.payroll[0].staffname
 
         var saveInCard = {
@@ -422,6 +512,11 @@ methods: {
             wage:self.wageAll,
         }
     
+        // Fix: Initialize saveCardList if it's null or undefined
+        if (!this.saveCardList) {
+            this.saveCardList = [];
+        }
+        
         this.saveCardList.push(saveInCard)
         //保存至浏览器localStorage
         window.localStorage.setItem('saveCardList',JSON.stringify(this.saveCardList))
@@ -445,19 +540,35 @@ methods: {
         let str = `姓名,岗位,产品,工序,单价,数量,工资\n`;
         // 增加\t为了不让表格显示科学计数法或者其他格式
         for(let i = 0 ; i < this.saveCardList.length ; i++ ){
+            // Add null checks for process and staff
+            if (!this.saveCardList[i] || !this.saveCardList[i].process || !this.saveCardList[i].staff) {
+                continue;
+            }
             
             for(const key in this.saveCardList[i].process){
-                for(const key in this.saveCardList[i].staff){
-                    str+=`${this.saveCardList[i].staff[key] + '\t'},`;
+                if (this.saveCardList[i].staff) {
+                    for(const key in this.saveCardList[i].staff){
+                        str+=`${this.saveCardList[i].staff[key] + '\t'},`;
+                    }
                 }
-                for(const j in this.saveCardList[i].process[key]){
-                    console.log(this.saveCardList[i].process[key][j])
-                    str+=`${this.saveCardList[i].process[key][j] + '\t'},`;
+                
+                if (this.saveCardList[i].process[key]) {
+                    for(const j in this.saveCardList[i].process[key]){
+                        if (this.saveCardList[i].process[key][j] !== undefined) {
+                            str+=`${this.saveCardList[i].process[key][j] + '\t'},`;
+                        } else {
+                            str+=`,`;
+                        }
+                    }
                 }
                 str+='\n';     
             }
-            str+=this.saveCardList[i].staff.name+'汇总'+',,,,,,'+this.saveCardList[i].wage+ '\n';
+            
+            if (this.saveCardList[i].staff && this.saveCardList[i].staff.name && this.saveCardList[i].wage !== undefined) {
+                str+=this.saveCardList[i].staff.name+'汇总'+',,,,,,'+this.saveCardList[i].wage+ '\n';
+            }
         }
+        
         console.log(str)
         // encodeURIComponent解决中文乱码
         const uri = 'data:text/csv;charset=utf-8,\ufeff' + encodeURIComponent(str);
